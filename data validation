@@ -1,0 +1,32 @@
+1. Total count for last run — PROD:
+
+
+SELECT COUNT(*) as total_count 
+FROM xfrm_interval.reading_ivl_nonvee_incr 
+WHERE aep_opco = 'oh' 
+  AND run_date = (SELECT MAX(run_date) FROM xfrm_interval.reading_ivl_nonvee_incr WHERE aep_opco = 'oh');
+2. Total count for last run — DEV:
+
+
+SELECT COUNT(*) as total_count 
+FROM xfrm_interval.reading_ivl_nonvee_incr 
+WHERE aep_opco = 'oh' 
+  AND run_date = (SELECT MAX(run_date) FROM xfrm_interval.reading_ivl_nonvee_incr WHERE aep_opco = 'oh');
+3. Channel + UOM breakdown — PROD:
+
+
+SELECT aep_channel_id, aep_raw_uom, COUNT(*) as cnt 
+FROM xfrm_interval.reading_ivl_nonvee_incr 
+WHERE aep_opco = 'oh' 
+  AND run_date = (SELECT MAX(run_date) FROM xfrm_interval.reading_ivl_nonvee_incr WHERE aep_opco = 'oh')
+GROUP BY aep_channel_id, aep_raw_uom 
+ORDER BY aep_channel_id;
+4. Channel + UOM breakdown — DEV:
+
+
+SELECT aep_channel_id, aep_raw_uom, COUNT(*) as cnt 
+FROM xfrm_interval.reading_ivl_nonvee_incr 
+WHERE aep_opco = 'oh' 
+  AND run_date = (SELECT MAX(run_date) FROM xfrm_interval.reading_ivl_nonvee_incr WHERE aep_opco = 'oh')
+GROUP BY aep_channel_id, aep_raw_uom 
+ORDER BY aep_channel_id;
