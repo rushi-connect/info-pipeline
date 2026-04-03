@@ -1,0 +1,236 @@
+Here are the validation queries focusing on hdp_update_user (info-insert/info-update), run_date, aep_usage_dt, and key columns:
+
+1. Count by insert vs update
+
+SELECT hdp_update_user, COUNT(*) as cnt
+FROM usage_nonvee.reading_ivl_nonvee_oh
+GROUP BY hdp_update_user;
+2. Count by run_date and insert/update
+
+SELECT run_date, hdp_update_user, COUNT(*) as cnt
+FROM usage_nonvee.reading_ivl_nonvee_oh
+GROUP BY run_date, hdp_update_user
+ORDER BY run_date DESC, hdp_update_user;
+3. Count by usage date and insert/update
+
+SELECT aep_usage_dt, hdp_update_user, COUNT(*) as cnt
+FROM usage_nonvee.reading_ivl_nonvee_oh
+GROUP BY aep_usage_dt, hdp_update_user
+ORDER BY aep_usage_dt DESC, hdp_update_user;
+4. Key column NULL validation (split by insert/update)
+
+SELECT 
+    hdp_update_user,
+    COUNT(*) as total,
+    SUM(CASE WHEN serialnumber IS NULL THEN 1 ELSE 0 END) as null_serial,
+    SUM(CASE WHEN aep_premise_nb IS NULL THEN 1 ELSE 0 END) as null_premise,
+    SUM(CASE WHEN aep_service_point IS NULL THEN 1 ELSE 0 END) as null_svc_point,
+    SUM(CASE WHEN aep_derived_uom IS NULL THEN 1 ELSE 0 END) as null_derived_uom,
+    SUM(CASE WHEN aep_channel_id IS NULL THEN 1 ELSE 0 END) as null_channel,
+    SUM(CASE WHEN endtimeperiod IS NULL THEN 1 ELSE 0 END) as null_endtime,
+    SUM(CASE WHEN starttimeperiod IS NULL THEN 1 ELSE 0 END) as null_starttime,
+    SUM(CASE WHEN value IS NULL THEN 1 ELSE 0 END) as null_value,
+    SUM(CASE WHEN aep_mtr_install_ts IS NULL THEN 1 ELSE 0 END) as null_mtr_install,
+    SUM(CASE WHEN aep_mtr_removal_ts IS NULL THEN 1 ELSE 0 END) as null_mtr_removal,
+    SUM(CASE WHEN aep_city IS NULL THEN 1 ELSE 0 END) as null_city,
+    SUM(CASE WHEN aep_state IS NULL THEN 1 ELSE 0 END) as null_state,
+    SUM(CASE WHEN aep_zip IS NULL THEN 1 ELSE 0 END) as null_zip
+FROM usage_nonvee.reading_ivl_nonvee_oh
+GROUP BY hdp_update_user;
+5. Sample records for info-insert vs info-update
+
+-- info-insert sample
+SELECT serialnumber, aep_premise_nb, aep_service_point, aep_channel_id, 
+       aep_derived_uom, endtimeperiod, starttimeperiod, value, 
+       aep_usage_dt, hdp_insert_dttm, hdp_update_dttm, hdp_update_user
+FROM usage_nonvee.reading_ivl_nonvee_oh
+WHERE hdp_update_user = 'info-insert'
+LIMIT 10;
+
+-- info-update sample
+SELECT serialnumber, aep_premise_nb, aep_service_point, aep_channel_id, 
+       aep_derived_uom, endtimeperiod, starttimeperiod, value, 
+       aep_usage_dt, hdp_insert_dttm, hdp_update_dttm, hdp_update_user
+FROM usage_nonvee.reading_ivl_nonvee_oh
+WHERE hdp_update_user = 'info-update'
+LIMIT 10;
+6. Dev vs Prod comparison (run on both)
+
+SELECT 
+    hdp_update_user,
+    aep_usage_dt,
+    COUNT(*) as cnt,
+    COUNT(DISTINCT serialnumber) as distinct_meters,
+    SUM(CASE WHEN aep_premise_nb IS NULL THEN 1 ELSE 0 END) as null_premise_cnt
+FROM usage_nonvee.reading_ivl_nonvee_oh
+GROUP BY hdp_update_user, aep_usage_dt
+ORDER BY aep_usage_dt DESC, hdp_update_user;
+=-======================================================-=-=--------------------------=-=-=-=-===============================-=-=-=-===============================-=-=-
+
+1. Full column check — ALL columns profile
+
+SELECT 
+    COUNT(*) as total_rows,
+    -- Identity columns
+    COUNT(DISTINCT serialnumber) as dist_serialnumber,
+    SUM(CASE WHEN serialnumber IS NULL THEN 1 ELSE 0 END) as null_serialnumber,
+    COUNT(DISTINCT source) as dist_source,
+    SUM(CASE WHEN source IS NULL THEN 1 ELSE 0 END) as null_source,
+    COUNT(DISTINCT aep_devicecode) as dist_aep_devicecode,
+    SUM(CASE WHEN aep_devicecode IS NULL THEN 1 ELSE 0 END) as null_aep_devicecode,
+    COUNT(DISTINCT isvirtual_meter) as dist_isvirtual_meter,
+    SUM(CASE WHEN isvirtual_meter IS NULL THEN 1 ELSE 0 END) as null_isvirtual_meter,
+    COUNT(DISTINCT timezoneoffset) as dist_timezoneoffset,
+    SUM(CASE WHEN timezoneoffset IS NULL THEN 1 ELSE 0 END) as null_timezoneoffset,
+    -- MACS joined columns
+    COUNT(DISTINCT aep_premise_nb) as dist_aep_premise_nb,
+    SUM(CASE WHEN aep_premise_nb IS NULL THEN 1 ELSE 0 END) as null_aep_premise_nb,
+    COUNT(DISTINCT aep_service_point) as dist_aep_service_point,
+    SUM(CASE WHEN aep_service_point IS NULL THEN 1 ELSE 0 END) as null_aep_service_point,
+    COUNT(DISTINCT aep_srvc_dlvry_id) as dist_aep_srvc_dlvry_id,
+    SUM(CASE WHEN aep_srvc_dlvry_id IS NULL THEN 1 ELSE 0 END) as null_aep_srvc_dlvry_id,
+    -- Register / UOM columns
+    COUNT(DISTINCT name_register) as dist_name_register,
+    SUM(CASE WHEN name_register IS NULL THEN 1 ELSE 0 END) as null_name_register,
+    COUNT(DISTINCT isvirtual_register) as dist_isvirtual_register,
+    SUM(CASE WHEN isvirtual_register IS NULL THEN 1 ELSE 0 END) as null_isvirtual_register,
+    COUNT(DISTINCT toutier) as dist_toutier,
+    SUM(CASE WHEN toutier IS NULL THEN 1 ELSE 0 END) as null_toutier,
+    COUNT(DISTINCT toutiername) as dist_toutiername,
+    SUM(CASE WHEN toutiername IS NULL THEN 1 ELSE 0 END) as null_toutiername,
+    COUNT(DISTINCT aep_derived_uom) as dist_aep_derived_uom,
+    SUM(CASE WHEN aep_derived_uom IS NULL THEN 1 ELSE 0 END) as null_aep_derived_uom,
+    COUNT(DISTINCT aep_raw_uom) as dist_aep_raw_uom,
+    SUM(CASE WHEN aep_raw_uom IS NULL THEN 1 ELSE 0 END) as null_aep_raw_uom,
+    COUNT(DISTINCT aep_srvc_qlty_idntfr) as dist_aep_srvc_qlty_idntfr,
+    SUM(CASE WHEN aep_srvc_qlty_idntfr IS NULL THEN 1 ELSE 0 END) as null_aep_srvc_qlty_idntfr,
+    COUNT(DISTINCT aep_channel_id) as dist_aep_channel_id,
+    SUM(CASE WHEN aep_channel_id IS NULL THEN 1 ELSE 0 END) as null_aep_channel_id,
+    -- Interval columns
+    COUNT(DISTINCT aep_sec_per_intrvl) as dist_aep_sec_per_intrvl,
+    SUM(CASE WHEN aep_sec_per_intrvl IS NULL THEN 1 ELSE 0 END) as null_aep_sec_per_intrvl,
+    COUNT(DISTINCT aep_meter_alias) as dist_aep_meter_alias,
+    SUM(CASE WHEN aep_meter_alias IS NULL THEN 1 ELSE 0 END) as null_aep_meter_alias,
+    COUNT(DISTINCT aep_meter_program) as dist_aep_meter_program,
+    SUM(CASE WHEN aep_meter_program IS NULL THEN 1 ELSE 0 END) as null_aep_meter_program,
+    COUNT(DISTINCT aep_billable_ind) as dist_aep_billable_ind,
+    SUM(CASE WHEN aep_billable_ind IS NULL THEN 1 ELSE 0 END) as null_aep_billable_ind,
+    COUNT(DISTINCT aep_usage_type) as dist_aep_usage_type,
+    SUM(CASE WHEN aep_usage_type IS NULL THEN 1 ELSE 0 END) as null_aep_usage_type,
+    COUNT(DISTINCT aep_timezone_cd) as dist_aep_timezone_cd,
+    SUM(CASE WHEN aep_timezone_cd IS NULL THEN 1 ELSE 0 END) as null_aep_timezone_cd,
+    -- Time period columns
+    SUM(CASE WHEN endtimeperiod IS NULL THEN 1 ELSE 0 END) as null_endtimeperiod,
+    SUM(CASE WHEN starttimeperiod IS NULL THEN 1 ELSE 0 END) as null_starttimeperiod,
+    -- Value columns
+    SUM(CASE WHEN value IS NULL THEN 1 ELSE 0 END) as null_value,
+    SUM(CASE WHEN aep_raw_value IS NULL THEN 1 ELSE 0 END) as null_aep_raw_value,
+    SUM(CASE WHEN scalarfloat IS NULL THEN 1 ELSE 0 END) as null_scalarfloat,
+    -- Data quality columns
+    SUM(CASE WHEN aep_data_quality_cd IS NULL THEN 1 ELSE 0 END) as null_aep_data_quality_cd,
+    SUM(CASE WHEN aep_data_validation IS NULL THEN 1 ELSE 0 END) as null_aep_data_validation,
+    -- Account columns
+    COUNT(DISTINCT aep_acct_cls_cd) as dist_aep_acct_cls_cd,
+    SUM(CASE WHEN aep_acct_cls_cd IS NULL THEN 1 ELSE 0 END) as null_aep_acct_cls_cd,
+    COUNT(DISTINCT aep_acct_type_cd) as dist_aep_acct_type_cd,
+    SUM(CASE WHEN aep_acct_type_cd IS NULL THEN 1 ELSE 0 END) as null_aep_acct_type_cd,
+    SUM(CASE WHEN aep_mtr_pnt_nb IS NULL THEN 1 ELSE 0 END) as null_aep_mtr_pnt_nb,
+    SUM(CASE WHEN aep_tarf_pnt_nb IS NULL THEN 1 ELSE 0 END) as null_aep_tarf_pnt_nb,
+    SUM(CASE WHEN aep_comp_mtr_mltplr IS NULL THEN 1 ELSE 0 END) as null_aep_comp_mtr_mltplr,
+    SUM(CASE WHEN aep_endtime_utc IS NULL THEN 1 ELSE 0 END) as null_aep_endtime_utc,
+    -- Meter install/removal
+    SUM(CASE WHEN aep_mtr_install_ts IS NULL THEN 1 ELSE 0 END) as null_aep_mtr_install_ts,
+    SUM(CASE WHEN aep_mtr_removal_ts IS NULL THEN 1 ELSE 0 END) as null_aep_mtr_removal_ts,
+    -- Location columns
+    COUNT(DISTINCT aep_city) as dist_aep_city,
+    SUM(CASE WHEN aep_city IS NULL THEN 1 ELSE 0 END) as null_aep_city,
+    COUNT(DISTINCT aep_zip) as dist_aep_zip,
+    SUM(CASE WHEN aep_zip IS NULL THEN 1 ELSE 0 END) as null_aep_zip,
+    COUNT(DISTINCT aep_state) as dist_aep_state,
+    SUM(CASE WHEN aep_state IS NULL THEN 1 ELSE 0 END) as null_aep_state,
+    -- Audit columns
+    COUNT(DISTINCT hdp_update_user) as dist_hdp_update_user,
+    SUM(CASE WHEN hdp_insert_dttm IS NULL THEN 1 ELSE 0 END) as null_hdp_insert_dttm,
+    SUM(CASE WHEN hdp_update_dttm IS NULL THEN 1 ELSE 0 END) as null_hdp_update_dttm,
+    -- Partition columns
+    COUNT(DISTINCT authority) as dist_authority,
+    SUM(CASE WHEN authority IS NULL THEN 1 ELSE 0 END) as null_authority,
+    COUNT(DISTINCT aep_opco) as dist_aep_opco,
+    COUNT(DISTINCT aep_usage_dt) as dist_aep_usage_dt,
+    COUNT(DISTINCT aep_meter_bucket) as dist_aep_meter_bucket
+FROM usage_nonvee.reading_ivl_nonvee_oh;
+2. info-insert validation (run on both DEV and PROD, compare results)
+
+SELECT 
+    'info-insert' as check_type,
+    COUNT(*) as total_rows,
+    COUNT(DISTINCT serialnumber) as dist_meters,
+    COUNT(DISTINCT aep_usage_dt) as dist_usage_dates,
+    COUNT(DISTINCT aep_premise_nb) as dist_premises,
+    COUNT(DISTINCT aep_channel_id) as dist_channels,
+    COUNT(DISTINCT aep_derived_uom) as dist_uom,
+    SUM(CASE WHEN aep_premise_nb IS NULL THEN 1 ELSE 0 END) as null_premise,
+    SUM(CASE WHEN aep_service_point IS NULL THEN 1 ELSE 0 END) as null_svc_point,
+    SUM(CASE WHEN aep_mtr_install_ts IS NULL THEN 1 ELSE 0 END) as null_mtr_install,
+    SUM(CASE WHEN aep_city IS NULL THEN 1 ELSE 0 END) as null_city,
+    SUM(CASE WHEN value IS NULL THEN 1 ELSE 0 END) as null_value,
+    SUM(CASE WHEN aep_endtime_utc IS NULL THEN 1 ELSE 0 END) as null_endtime_utc,
+    MIN(hdp_insert_dttm) as min_insert_dttm,
+    MAX(hdp_insert_dttm) as max_insert_dttm,
+    MIN(aep_usage_dt) as min_usage_dt,
+    MAX(aep_usage_dt) as max_usage_dt
+FROM usage_nonvee.reading_ivl_nonvee_oh
+WHERE hdp_update_user = 'info-insert';
+3. info-update validation (run on both DEV and PROD, compare results)
+
+SELECT 
+    'info-update' as check_type,
+    COUNT(*) as total_rows,
+    COUNT(DISTINCT serialnumber) as dist_meters,
+    COUNT(DISTINCT aep_usage_dt) as dist_usage_dates,
+    COUNT(DISTINCT aep_premise_nb) as dist_premises,
+    COUNT(DISTINCT aep_channel_id) as dist_channels,
+    COUNT(DISTINCT aep_derived_uom) as dist_uom,
+    SUM(CASE WHEN aep_premise_nb IS NULL THEN 1 ELSE 0 END) as null_premise,
+    SUM(CASE WHEN aep_service_point IS NULL THEN 1 ELSE 0 END) as null_svc_point,
+    SUM(CASE WHEN aep_mtr_install_ts IS NULL THEN 1 ELSE 0 END) as null_mtr_install,
+    SUM(CASE WHEN aep_city IS NULL THEN 1 ELSE 0 END) as null_city,
+    SUM(CASE WHEN value IS NULL THEN 1 ELSE 0 END) as null_value,
+    SUM(CASE WHEN aep_endtime_utc IS NULL THEN 1 ELSE 0 END) as null_endtime_utc,
+    MIN(hdp_update_dttm) as min_update_dttm,
+    MAX(hdp_update_dttm) as max_update_dttm,
+    MIN(aep_usage_dt) as min_usage_dt,
+    MAX(aep_usage_dt) as max_usage_dt
+FROM usage_nonvee.reading_ivl_nonvee_oh
+WHERE hdp_update_user = 'info-update';
+4. Side-by-side per usage_dt (easiest to compare DEV vs PROD)
+
+SELECT 
+    aep_usage_dt,
+    hdp_update_user,
+    COUNT(*) as cnt,
+    COUNT(DISTINCT serialnumber) as dist_meters,
+    SUM(CASE WHEN aep_premise_nb IS NULL THEN 1 ELSE 0 END) as null_premise,
+    SUM(CASE WHEN aep_service_point IS NULL THEN 1 ELSE 0 END) as null_svc_point,
+    SUM(CASE WHEN value IS NULL THEN 1 ELSE 0 END) as null_value,
+    ROUND(AVG(value), 4) as avg_value,
+    ROUND(SUM(value), 4) as sum_value
+FROM usage_nonvee.reading_ivl_nonvee_oh
+GROUP BY aep_usage_dt, hdp_update_user
+ORDER BY aep_usage_dt DESC, hdp_update_user;
+5. Spot-check specific meter (pick a serialnumber from DEV, run same on PROD)
+
+-- Replace 'YOUR_SERIAL' with an actual serialnumber from your dev results
+SELECT 
+    serialnumber, aep_channel_id, aep_raw_uom, endtimeperiod, starttimeperiod,
+    value, aep_raw_value, scalarfloat,
+    aep_premise_nb, aep_service_point, aep_derived_uom,
+    aep_mtr_install_ts, aep_mtr_removal_ts,
+    aep_city, aep_zip, aep_state,
+    hdp_update_user, hdp_insert_dttm, hdp_update_dttm,
+    aep_usage_dt
+FROM usage_nonvee.reading_ivl_nonvee_oh
+WHERE serialnumber = 'YOUR_SERIAL'
+ORDER BY endtimeperiod, aep_channel_id;
+Run query 1 first on both environments to get the full column profile, then compare queries 2 & 3 for insert/update splits. Query 4 gives you the quickest row-by-row date comparison. Query 5 lets you drill down to a specific meter for exact value matching.
+
