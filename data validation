@@ -1,222 +1,123 @@
-# Validation F: Quick summary — run first
-spark.sql("""
-    SELECT 
-        hdp_update_user,
-        MAX(hdp_insert_dttm) as latest_run_ts,
-        COUNT(*) as total_rows
-    FROM usage_nonvee.reading_ivl_nonvee_oh
-    WHERE hdp_update_user IN ('info-insert', 'info-update')
-      AND aep_usage_dt = '2026-04-01'
-    GROUP BY hdp_update_user
-""").show(truncate=False)
-
-# Validation D: Count summary (DEV vs PROD)
-spark.sql("""
-    SELECT 
-        hdp_update_user,
-        COUNT(*) as total_rows,
-        COUNT(DISTINCT serialnumber) as dist_meters,
-        COUNT(DISTINCT aep_premise_nb) as dist_premises,
-        SUM(CASE WHEN aep_premise_nb IS NULL THEN 1 ELSE 0 END) as null_premise,
-        SUM(CASE WHEN aep_service_point IS NULL THEN 1 ELSE 0 END) as null_svc_point,
-        SUM(CASE WHEN starttimeperiod IS NULL THEN 1 ELSE 0 END) as null_starttime,
-        SUM(CASE WHEN value IS NULL THEN 1 ELSE 0 END) as null_value,
-        ROUND(SUM(value), 2) as sum_value,
-        ROUND(AVG(value), 4) as avg_value,
-        MIN(hdp_insert_dttm) as min_insert_ts,
-        MAX(hdp_insert_dttm) as max_insert_ts
-    FROM usage_nonvee.reading_ivl_nonvee_oh
-    WHERE hdp_update_user IN ('info-insert', 'info-update')
-      AND aep_usage_dt = '2026-04-01'
-      AND hdp_insert_dttm >= (SELECT DATE(MAX(hdp_insert_dttm)) FROM usage_nonvee.reading_ivl_nonvee_oh 
-                              WHERE aep_usage_dt = '2026-04-01' AND hdp_update_user IN ('info-insert', 'info-update'))
-    GROUP BY hdp_update_user
-""").show(truncate=False)
-
-# Validation B: MACS join match vs no-match
-spark.sql("""
-    SELECT 
-        hdp_update_user,
-        CASE WHEN aep_premise_nb IS NOT NULL THEN 'MACS_MATCHED' ELSE 'MACS_NOT_MATCHED' END as join_status,
-        COUNT(*) as cnt,
-        COUNT(DISTINCT serialnumber) as dist_meters
-    FROM usage_nonvee.reading_ivl_nonvee_oh
-    WHERE hdp_update_user IN ('info-insert', 'info-update')
-      AND aep_usage_dt = '2026-04-01'
-      AND hdp_insert_dttm >= (SELECT DATE(MAX(hdp_insert_dttm)) FROM usage_nonvee.reading_ivl_nonvee_oh 
-                              WHERE aep_usage_dt = '2026-04-01' AND hdp_update_user IN ('info-insert', 'info-update'))
-    GROUP BY hdp_update_user,
-        CASE WHEN aep_premise_nb IS NOT NULL THEN 'MACS_MATCHED' ELSE 'MACS_NOT_MATCHED' END
-    ORDER BY hdp_update_user, join_status
-""").show(truncate=False)
-
-# Validation B: MACS matched — all columns populated?
-spark.sql("""
-    SELECT 
-        hdp_update_user,
-        COUNT(*) as macs_matched_rows,
-        SUM(CASE WHEN aep_service_point IS NULL THEN 1 ELSE 0 END) as null_svc_point,
-        SUM(CASE WHEN aep_srvc_dlvry_id IS NULL THEN 1 ELSE 0 END) as null_srvc_dlvry,
-        SUM(CASE WHEN aep_devicecode IS NULL THEN 1 ELSE 0 END) as null_devicecode,
-        SUM(CASE WHEN aep_meter_program IS NULL THEN 1 ELSE 0 END) as null_mtr_pgm,
-        SUM(CASE WHEN aep_acct_cls_cd IS NULL THEN 1 ELSE 0 END) as null_acct_cls,
-        SUM(CASE WHEN aep_acct_type_cd IS NULL THEN 1 ELSE 0 END) as null_acct_type,
-        SUM(CASE WHEN aep_mtr_pnt_nb IS NULL THEN 1 ELSE 0 END) as null_mtr_pnt,
-        SUM(CASE WHEN aep_tarf_pnt_nb IS NULL THEN 1 ELSE 0 END) as null_tarf_pnt,
-        SUM(CASE WHEN aep_mtr_install_ts IS NULL THEN 1 ELSE 0 END) as null_mtr_install,
-        SUM(CASE WHEN aep_mtr_removal_ts IS NULL THEN 1 ELSE 0 END) as null_mtr_removal,
-        SUM(CASE WHEN aep_city IS NULL THEN 1 ELSE 0 END) as null_city,
-        SUM(CASE WHEN aep_zip IS NULL THEN 1 ELSE 0 END) as null_zip,
-        SUM(CASE WHEN aep_state IS NULL THEN 1 ELSE 0 END) as null_state
-    FROM usage_nonvee.reading_ivl_nonvee_oh
-    WHERE hdp_update_user IN ('info-insert', 'info-update')
-      AND aep_usage_dt = '2026-04-01'
-      AND aep_premise_nb IS NOT NULL
-      AND hdp_insert_dttm >= (SELECT DATE(MAX(hdp_insert_dttm)) FROM usage_nonvee.reading_ivl_nonvee_oh 
-                              WHERE aep_usage_dt = '2026-04-01' AND hdp_update_user IN ('info-insert', 'info-update'))
-    GROUP BY hdp_update_user
-""").show(truncate=False)
-
-# Validation B: Top 20 failed MACS meters
-spark.sql("""
-    SELECT 
-        serialnumber,
-        hdp_update_user,
-        COUNT(*) as cnt,
-        MIN(endtimeperiod) as min_endtime,
-        MAX(endtimeperiod) as max_endtime
-    FROM usage_nonvee.reading_ivl_nonvee_oh
-    WHERE hdp_update_user IN ('info-insert', 'info-update')
-      AND aep_usage_dt = '2026-04-01'
-      AND aep_premise_nb IS NULL
-      AND hdp_insert_dttm >= (SELECT DATE(MAX(hdp_insert_dttm)) FROM usage_nonvee.reading_ivl_nonvee_oh 
-                              WHERE aep_usage_dt = '2026-04-01' AND hdp_update_user IN ('info-insert', 'info-update'))
-    GROUP BY serialnumber, hdp_update_user
-    ORDER BY cnt DESC
-    LIMIT 20
-""").show(truncate=False)
-
-# Validation C: aep_service_point logic
-spark.sql("""
-    SELECT 
-        hdp_update_user,
-        CASE 
-            WHEN aep_premise_nb IS NOT NULL AND aep_tarf_pnt_nb IS NOT NULL AND aep_mtr_pnt_nb IS NOT NULL 
-                THEN 'ALL_PRESENT'
-            ELSE 'HAS_NULL'
-        END as input_status,
-        SUM(CASE WHEN aep_service_point IS NOT NULL THEN 1 ELSE 0 END) as svc_point_populated,
-        SUM(CASE WHEN aep_service_point IS NULL THEN 1 ELSE 0 END) as svc_point_null,
-        COUNT(*) as cnt
-    FROM usage_nonvee.reading_ivl_nonvee_oh
-    WHERE hdp_update_user IN ('info-insert', 'info-update')
-      AND aep_usage_dt = '2026-04-01'
-      AND hdp_insert_dttm >= (SELECT DATE(MAX(hdp_insert_dttm)) FROM usage_nonvee.reading_ivl_nonvee_oh 
-                              WHERE aep_usage_dt = '2026-04-01' AND hdp_update_user IN ('info-insert', 'info-update'))
-    GROUP BY hdp_update_user,
-        CASE 
-            WHEN aep_premise_nb IS NOT NULL AND aep_tarf_pnt_nb IS NOT NULL AND aep_mtr_pnt_nb IS NOT NULL 
-                THEN 'ALL_PRESENT'
-            ELSE 'HAS_NULL'
-        END
-""").show(truncate=False)
-
-# Validation C: Format check
-spark.sql("""
-    SELECT 
-        hdp_update_user,
-        aep_premise_nb,
-        aep_tarf_pnt_nb,
-        aep_mtr_pnt_nb,
-        aep_service_point,
-        concat(aep_premise_nb, '-', aep_tarf_pnt_nb, '-', aep_mtr_pnt_nb) as expected,
-        CASE 
-            WHEN aep_service_point = concat(aep_premise_nb, '-', aep_tarf_pnt_nb, '-', aep_mtr_pnt_nb) 
-            THEN 'MATCH' ELSE 'MISMATCH' 
-        END as check_result
-    FROM usage_nonvee.reading_ivl_nonvee_oh
-    WHERE hdp_update_user IN ('info-insert', 'info-update')
-      AND aep_usage_dt = '2026-04-01'
-      AND aep_service_point IS NOT NULL
-      AND hdp_insert_dttm >= (SELECT DATE(MAX(hdp_insert_dttm)) FROM usage_nonvee.reading_ivl_nonvee_oh 
-                              WHERE aep_usage_dt = '2026-04-01' AND hdp_update_user IN ('info-insert', 'info-update'))
-    LIMIT 20
-""").show(truncate=False)
-
-# Validation A: starttime/endtime calculation
-spark.sql("""
-    SELECT 
-        hdp_update_user,
-        COUNT(*) as total,
-        SUM(CASE WHEN starttimeperiod IS NULL THEN 1 ELSE 0 END) as null_starttime,
-        SUM(CASE WHEN endtimeperiod IS NULL THEN 1 ELSE 0 END) as null_endtime,
-        SUM(CASE WHEN aep_sec_per_intrvl IS NULL THEN 1 ELSE 0 END) as null_interval_secs,
-        SUM(CASE 
-            WHEN (unix_timestamp(substr(endtimeperiod, 1, 19), "yyyy-MM-dd'T'HH:mm:ss") 
-                - unix_timestamp(substr(starttimeperiod, 1, 19), "yyyy-MM-dd'T'HH:mm:ss")) 
-                != CAST(aep_sec_per_intrvl AS INT)
-            THEN 1 ELSE 0 
-        END) as mismatched_interval_count
-    FROM usage_nonvee.reading_ivl_nonvee_oh
-    WHERE hdp_update_user IN ('info-insert', 'info-update')
-      AND aep_usage_dt = '2026-04-01'
-      AND hdp_insert_dttm >= (SELECT DATE(MAX(hdp_insert_dttm)) FROM usage_nonvee.reading_ivl_nonvee_oh 
-                              WHERE aep_usage_dt = '2026-04-01' AND hdp_update_user IN ('info-insert', 'info-update'))
-    GROUP BY hdp_update_user
-""").show(truncate=False)
-
-# Validation E: Serial number drill-down — Replace 'YOUR_SERIAL'
-spark.sql("""
-    SELECT 
-        serialnumber,
-        aep_channel_id,
-        aep_raw_uom,
-        starttimeperiod,
-        endtimeperiod,
-        timezoneoffset,
-        aep_sec_per_intrvl,
-        value,
-        aep_raw_value,
-        scalarfloat,
-        aep_derived_uom,
-        aep_premise_nb,
-        aep_service_point,
-        aep_srvc_dlvry_id,
-        aep_mtr_pnt_nb,
-        aep_tarf_pnt_nb,
-        aep_mtr_install_ts,
-        aep_mtr_removal_ts,
-        aep_city, aep_zip, aep_state,
-        hdp_update_user,
-        hdp_insert_dttm,
-        hdp_update_dttm
-    FROM usage_nonvee.reading_ivl_nonvee_oh
-    WHERE hdp_update_user IN ('info-insert', 'info-update')
-      AND aep_usage_dt = '2026-04-01'
-      AND serialnumber = 'YOUR_SERIAL'
-      AND hdp_insert_dttm >= (SELECT DATE(MAX(hdp_insert_dttm)) FROM usage_nonvee.reading_ivl_nonvee_oh 
-                              WHERE aep_usage_dt = '2026-04-01' AND hdp_update_user IN ('info-insert', 'info-update'))
-    ORDER BY endtimeperiod, aep_channel_id
-""").show(100, truncate=False)
-Note: I used DATE(MAX(hdp_insert_dttm)) instead of ::date since Spark SQL uses DATE() cast function. If your Spark version doesn't support subqueries in WHERE, you can do it in two steps:
+Instructions: RUN this below query 1st in a dev and then for other queries we need to get the requireed column info for reference from this below query results and we have to run those all queries in dev as well as in prod for validating and compare all the columsn counts and records with there values with each other  
+SELECT serialnumber, source, aep_devicecode, isvirtual_meter, timezoneoffset,
+       aep_premise_nb, aep_service_point, aep_mtr_install_ts, aep_mtr_removal_ts,
+       aep_srvc_dlvry_id, aep_comp_mtr_mltplr, name_register, isvirtual_register,
+       toutier, toutiername, aep_srvc_qlty_idntfr, aep_channel_id, aep_raw_uom,
+       aep_sec_per_intrvl, aep_meter_alias, aep_meter_program, aep_billable_ind,
+       aep_usage_type, aep_timezone_cd, endtimeperiod, starttimeperiod,
+       value, aep_raw_value, scalarfloat, aep_data_quality_cd, aep_data_validation,
+       aep_acct_cls_cd, aep_acct_type_cd, aep_mtr_pnt_nb, aep_tarf_pnt_nb,
+       aep_endtime_utc, aep_city, aep_zip, aep_state, hdp_update_user,
+       hdp_insert_dttm, hdp_update_dttm, authority, aep_usage_dt, aep_derived_uom,
+       aep_opco
+FROM usage_nonvee.reading_ivl_nonvee_oh
+WHERE aep_usage_dt = '2026-04-01'
+Limit 150
 
 
-# Step 1: Get latest run date
-latest_run = spark.sql("""
-    SELECT DATE(MAX(hdp_insert_dttm)) as latest_dt
-    FROM usage_nonvee.reading_ivl_nonvee_oh
-    WHERE aep_usage_dt = '2026-04-01' 
-      AND hdp_update_user IN ('info-insert', 'info-update')
-""").collect()[0].latest_dt
+UIQ-INFO DATA VALIDATION:
+QUERY:
+SELECT aep_channel_id, aep_raw_uom
+FROM xfrm_interval.reading_ivl_nonvee_incr
+WHERE serialnumber = '923530104'
+  AND aep_endtime_utc = '1775016900'
+  AND aep_opco = 'oh'
+ORDER BY aep_channel_id;
 
-print(f"Latest run date: {latest_run}")
+DEV:
+ 
+PROD:
+ 
+QUERY:
+SELECT serialnumber, aep_endtime_utc, aep_channel_id, aep_raw_uom, 
+       endtimeperiod, count(*) as cnt
+FROM xfrm_interval.reading_ivl_nonvee_incr
+WHERE serialnumber = '923530104'
+  AND aep_opco = 'oh'
+  AND aep_endtime_utc = '1775016900'
+  AND aep_usage_dt = '2026-04-01'
+GROUP BY serialnumber, aep_endtime_utc, aep_channel_id, aep_raw_uom, 
+         endtimeperiod;
 
-# Step 2: Use it in queries
-spark.sql(f"""
-    SELECT ...
-    FROM usage_nonvee.reading_ivl_nonvee_oh
-    WHERE hdp_update_user IN ('info-insert', 'info-update')
-      AND aep_usage_dt = '2026-04-01'
-      AND hdp_insert_dttm >= '{latest_run}'
-    ...
-""").show(truncate=False)
+DEV:
+ 
+
+PROD
+ 
+
+
+
+
+
+
+
+
+
+QUERY:
+select count(*) from usage_nonvee.reading_ivl_nonvee_oh
+WHERE serialnumber = '923530104'
+  AND aep_opco = 'oh'
+  AND aep_endtime_utc = '1775016900'
+  AND aep_usage_dt = '2026-04-01'
+
+DEV:
+ 
+PROD:
+ 
+
+Query:
+select count(*) from usage_nonvee.reading_ivl_nonvee_oh
+WHERE serialnumber = '923530104'
+  AND aep_opco = 'oh'
+  AND aep_usage_dt = '2026-04-01'
+  AND hdp_update_user = 'info-insert'
+
+DEV:
+ 
+
+PROD:
+ 
+Query:
+select timezoneoffset, aep_service_point, aep_sec_per_intrvl, endtimeperiod, starttimeperiod, scalarfloat, aep_acct_cls_cd, aep_city
+from usage_nonvee.reading_ivl_nonvee_oh
+where aep_usage_dt = '2026-04-01'  
+and serialnumber = '445494200'
+and aep_premise_nb = '107641531'
+and endtimeperiod = '2026-04-01T18:45:00-04:00'
+
+DEV:
+ 
+
+PROD:
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+Query:
+select 
+serialnumber, aep_usage_dt, aep_derived_uom, aep_channel_id, aep_raw_value, value, aep_service_point, aep_premise_nb
+from "xfrm_interval"."reading_ivl_nonvee_incr" 
+where ((hdp_update_dttm >= TIMESTAMP '2026-04-01 00:00:00' and hdp_update_dttm < TIMESTAMP '2026-04-02 00:00:00') or 
+(hdp_insert_dttm >= TIMESTAMP '2026-04-01 00:00:00' and hdp_insert_dttm < TIMESTAMP '2026-04-02 00:00:00'))
+and aep_opco = 'oh'
+and aep_usage_dt = '2026-04-01'  
+and serialnumber = '445494200'
+and aep_premise_nb = '107641531'
+and hdp_update_user = 'info-insert'
+and aep_endtime_utc = '1775045700'
+
+  
+
+
+
+
+
