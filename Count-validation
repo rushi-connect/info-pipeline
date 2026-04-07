@@ -1,723 +1,125 @@
-# Data Validation Guide - Non-VEE Pipeline Migration
+Lg Queries 
+Q1: Identify serial numbers and aep_usage_dt from the latest run
+
+Select * from xfrm_interval"."reading_ivl_nonvee_incr where hdp_insert_dttm >= ‘’ limit 100
+Or  
+Select * from usage_nonvee.reading_ivl_nonvee_tx where hdp_insert_dttm >= ‘’ limit 100
+Q2:
+select 
+serialnumber,aep_usage_dt,aep_derived_uom,aep_channel_id,aep_raw_value, value,aep_service_point,aep_premise_nb
+from "xfrm_interval"."reading_ivl_nonvee_incr" 
+where ((hdp_update_dttm >= TIMESTAMP '2026-03-23 00:00:00' and hdp_update_dttm < TIMESTAMP '2026-03-24 00:00:00') or 
+(hdp_insert_dttm >= TIMESTAMP '2026-03-23 00:00:00' and hdp_insert_dttm < TIMESTAMP '2026-03-24 00:00:00'))
+and aep_opco ='tx'
+and serialnumber ='200306248' 
+-- and aep_premise_nb = '971213203'
+-- and aep_channel_id = '102'
+and aep_endtime_utc = '1774257300'
+
+Q3:
+select * from usage_nonvee.reading_ivl_nonvee_tx
+where aep_usage_dt = '2026-03-25'
+and serialnumber ='109103600'
+and aep_endtime_utc = '1774415700'
+order by name_register
+
+Q4:
+select serialnumber, aep_premise_nb, aep_usage_dt, timezoneoffset, endtimeperiod, starttimeperiod,  aep_endtime_utc
+from usage_nonvee.reading_ivl_nonvee_tx
+where aep_usage_dt = '2026-03-25' 
+and serialnumber = '145874410'
+and aep_premise_nb = '942199084'
+and name_register = 'E-VOLTAGE-15-SAGA'
+
+Q5:
+select timezoneoffset, aep_service_point, aep_sec_per_intrvl, endtimeperiod, starttimeperiod, scalarfloat, aep_acct_cls_cd, aep_city
+from usage_nonvee.reading_ivl_nonvee_tx
+where aep_usage_dt = '2026-04-03'  
+and serialnumber = '200343702' 
+and aep_premise_nb = '974579823'
+and endtimeperiod = '2026-04-03T15:30:00-05:00'
+
+
+
+
+
+
+
+
+
+Uiq-auth queries
+Q1: Identify serial numbers and aep_usage_dt from the latest run
+
+Select * from xfrm_interval"."reading_ivl_nonvee_incr where hdp_insert_dttm >= ‘’ limit 100
+Or  
+Select * from usage_nonvee.reading_ivl_nonvee_tx where hdp_insert_dttm >= ‘’ limit 100
+Q2:
+select 
+serialnumber,aep_usage_dt,aep_meter_bucket,aep_derived_uom,aep_channel_id,aep_raw_value, value,aep_service_point,aep_premise_nb
+from "usage_nonvee"."reading_ivl_nonvee_oh" 
+where ((hdp_update_dttm > TIMESTAMP '2026-03-24 00:00:00' ) or 
+(hdp_insert_dttm > TIMESTAMP '2026-03-24 00:00:00' ))
+and aep_opco ='oh'
+and hdp_update_user = 'auth-insert'
+and serialnumber ='925220036' 
+and aep_premise_nb = '105183210'
+and aep_channel_id = '102'
+-- and aep_endtime_utc = '1773068400'
+-- and aep_premise_nb is not null
+-- and endtimeperiod = '2026-03-09T19:00:00-04:00'
+and aep_usage_dt = '2026-03-12'
+limit 50
+
+
+
+Q3:
+select 
+serialnumber,aep_usage_dt,aep_meter_bucket,aep_derived_uom,aep_channel_id,aep_raw_value, value,aep_service_point,aep_premise_nb
+from "usage_nonvee"."reading_ivl_nonvee_oh" 
+where ((hdp_update_dttm > TIMESTAMP '2026-03-27 00:00:00' ) or 
+(hdp_insert_dttm > TIMESTAMP '2026-03-27 00:00:00' ))
+and aep_opco ='oh'
+and hdp_update_user = 'auth-insert'
+and serialnumber ='621034124' 
+and endtimeperiod = '2026-03-25T00:00:00-04:00'
+and aep_usage_dt = '2026-03-24'
+limit 50
+
+Q4:
+select 
+serialnumber,aep_usage_dt,aep_meter_bucket,aep_derived_uom,aep_channel_id,aep_raw_value, value,aep_service_point,aep_premise_nb
+from usage_nonvee.reading_ivl_nonvee_oh
+where aep_usage_dt = '2026-04-03' 
+and hdp_update_user like 'auth%'
+and serialnumber = '882979559'
+and endtimeperiod = '2026-04-04T00:00:00-04:00'
+limit 100
+
+
+
+
+Q5:
+select 
+timezoneoffset, aep_service_point, aep_sec_per_intrvl, endtimeperiod, starttimeperiod, scalarfloat, aep_acct_cls_cd, aep_city
+from usage_nonvee.reading_ivl_nonvee_oh
+where aep_usage_dt = '2026-04-03' 
+and hdp_update_user like 'auth%'
+and serialnumber = '882979559'
+and endtimeperiod = '2026-04-04T00:00:00-04:00'
+limit 100
+
+Q6:
+#aep_usage_dt = '2026-03-28'
+select
+serialnumber,aep_usage_dt,aep_meter_bucket,aep_derived_uom,aep_channel_id,aep_raw_value, value,aep_service_point,aep_premise_nb
+from usage_nonvee.reading_ivl_nonvee_oh
+where aep_usage_dt = '2026-03-28' and serialnumber = '924076597' 
+and hdp_update_user like 'auth%' and endtimeperiod = '2026-03-29T00:00:00-04:00'
+
+Q7:
+select
+timezoneoffset, aep_service_point, aep_sec_per_intrvl, endtimeperiod, starttimeperiod, scalarfloat, aep_acct_cls_cd, aep_city
+from usage_nonvee.reading_ivl_nonvee_oh
+where aep_usage_dt = '2026-03-28' and serialnumber = '924076597' 
+and hdp_update_user like 'auth%' and endtimeperiod = '2026-03-29T00:00:00-04:00'
 
-## Overview
-
-This document describes the end-to-end data validation process for validating 3 migrated PySpark pipelines against the existing production (old Hive) pipeline. Validation is performed using **Amazon Athena** to query Iceberg consume tables in both DEV and PROD accounts.
-
-## Pipelines Under Validation
-
-| # | Pipeline | Script | Consume Table | Incremental Table | hdp_update_user Values | OpCo |
-|---|----------|--------|---------------|-------------------|----------------------|------|
-| 1 | UIQ Info | `nonvee_uiq_info_job.py` | `usage_nonvee.reading_ivl_nonvee_{opco}` | `xfrm_interval.reading_ivl_nonvee_incr` | `info-insert`, `info-update` | oh, im, pso, ap, swp |
-| 2 | UIQ Auth | `nonvee_uiq_auth_job.py` | `usage_nonvee.reading_ivl_nonvee_{opco}` | `xfrm_interval.reading_ivl_nonvee_incr` | `auth-insert`, `auth-update` | oh, im, pso, ap, swp |
-| 3 | LG | `nonvee_lg_job.py` | `usage_nonvee.reading_ivl_nonvee_{opco}` | `xfrm_interval.reading_ivl_nonvee_incr` | `info-insert`, `info-update` | tx |
-
-## Validation Approach
-
-### Step 1: Run queries on DEV (Athena)
-- Execute validation queries against the DEV consume table
-- Capture counts, NULL rates, distinct values, and sample records for `info-insert` / `info-update` (or `auth-insert` / `auth-update` for Auth pipeline)
-
-### Step 2: Pick key values from DEV results
-- From DEV results, pick important column values (e.g., `serialnumber`, `aep_usage_dt`, counts)
-- Use these as filter conditions in PROD queries to compare exact same data
-
-### Step 3: Run same queries on PROD (Athena)
-- Execute the same validation queries on PROD
-- Compare counts, NULLs, distinct values side-by-side
-
-### Step 4: Full data CSV comparison
-- Query all columns from DEV and PROD for matching records
-- Export results to CSV
-- Compare both CSVs row-by-row to confirm data matches
-
----
-
-## Validation Queries
-
-> **Note:** Replace the following placeholders before running:
-> - `{TABLE}` = consume table name (e.g., `usage_nonvee.reading_ivl_nonvee_oh`)
-> - `{UPDATE_USER_FILTER}` = `('info-insert', 'info-update')` for Info/LG pipelines, `('auth-insert', 'auth-update')` for Auth pipeline
-> - `{USAGE_DATE}` = target usage date (e.g., `2026-04-01`)
-> - `{LATEST_RUN_DT}` = latest run date from Query 1
-
----
-
-### Query 1: Get Latest Run Timestamp
-
-**Purpose:** Identify the most recent run for the target usage date.
-
-```sql
-SELECT 
-    hdp_update_user,
-    MAX(hdp_insert_dttm) AS latest_insert_ts,
-    MAX(hdp_update_dttm) AS latest_update_ts,
-    CAST(MAX(hdp_insert_dttm) AS DATE) AS latest_run_dt,
-    COUNT(*) AS total_rows
-FROM {TABLE}
-WHERE hdp_update_user IN {UPDATE_USER_FILTER}
-  AND aep_usage_dt = '{USAGE_DATE}'
-GROUP BY hdp_update_user;
-```
-
----
-
-### Query 2: Total Record Count — Insert vs Update
-
-**Purpose:** Compare overall volume between DEV and PROD.
-
-```sql
-SELECT 
-    hdp_update_user,
-    COUNT(*) AS total_rows,
-    COUNT(DISTINCT serialnumber) AS dist_meters,
-    COUNT(DISTINCT aep_channel_id) AS dist_channels,
-    COUNT(DISTINCT aep_raw_uom) AS dist_uom,
-    COUNT(DISTINCT aep_premise_nb) AS dist_premises,
-    MIN(starttimeperiod) AS min_starttime,
-    MAX(endtimeperiod) AS max_endtime,
-    MIN(hdp_insert_dttm) AS min_insert_ts,
-    MAX(hdp_insert_dttm) AS max_insert_ts
-FROM {TABLE}
-WHERE hdp_update_user IN {UPDATE_USER_FILTER}
-  AND aep_usage_dt = '{USAGE_DATE}'
-  AND hdp_insert_dttm >= CAST('{LATEST_RUN_DT}' AS DATE)
-GROUP BY hdp_update_user;
-```
-
----
-
-### Query 3: Full Column NULL Profile
-
-**Purpose:** Check every column for NULLs. Compare DEV vs PROD to spot missing data from joins or transformations.
-
-```sql
-SELECT 
-    hdp_update_user,
-    COUNT(*) AS total,
-    -- Identity
-    SUM(CASE WHEN serialnumber IS NULL THEN 1 ELSE 0 END) AS null_serialnumber,
-    SUM(CASE WHEN source IS NULL THEN 1 ELSE 0 END) AS null_source,
-    SUM(CASE WHEN aep_devicecode IS NULL THEN 1 ELSE 0 END) AS null_aep_devicecode,
-    SUM(CASE WHEN isvirtual_meter IS NULL THEN 1 ELSE 0 END) AS null_isvirtual_meter,
-    SUM(CASE WHEN timezoneoffset IS NULL THEN 1 ELSE 0 END) AS null_timezoneoffset,
-    -- MACS joined columns
-    SUM(CASE WHEN aep_premise_nb IS NULL THEN 1 ELSE 0 END) AS null_aep_premise_nb,
-    SUM(CASE WHEN aep_service_point IS NULL THEN 1 ELSE 0 END) AS null_aep_service_point,
-    SUM(CASE WHEN aep_srvc_dlvry_id IS NULL THEN 1 ELSE 0 END) AS null_aep_srvc_dlvry_id,
-    -- UOM / Register
-    SUM(CASE WHEN name_register IS NULL THEN 1 ELSE 0 END) AS null_name_register,
-    SUM(CASE WHEN isvirtual_register IS NULL THEN 1 ELSE 0 END) AS null_isvirtual_register,
-    SUM(CASE WHEN toutier IS NULL THEN 1 ELSE 0 END) AS null_toutier,
-    SUM(CASE WHEN toutiername IS NULL THEN 1 ELSE 0 END) AS null_toutiername,
-    SUM(CASE WHEN aep_derived_uom IS NULL THEN 1 ELSE 0 END) AS null_aep_derived_uom,
-    SUM(CASE WHEN aep_raw_uom IS NULL THEN 1 ELSE 0 END) AS null_aep_raw_uom,
-    SUM(CASE WHEN aep_srvc_qlty_idntfr IS NULL THEN 1 ELSE 0 END) AS null_aep_srvc_qlty_idntfr,
-    SUM(CASE WHEN aep_channel_id IS NULL THEN 1 ELSE 0 END) AS null_aep_channel_id,
-    -- Interval
-    SUM(CASE WHEN aep_sec_per_intrvl IS NULL THEN 1 ELSE 0 END) AS null_aep_sec_per_intrvl,
-    SUM(CASE WHEN aep_meter_alias IS NULL THEN 1 ELSE 0 END) AS null_aep_meter_alias,
-    SUM(CASE WHEN aep_meter_program IS NULL THEN 1 ELSE 0 END) AS null_aep_meter_program,
-    SUM(CASE WHEN aep_billable_ind IS NULL THEN 1 ELSE 0 END) AS null_aep_billable_ind,
-    SUM(CASE WHEN aep_usage_type IS NULL THEN 1 ELSE 0 END) AS null_aep_usage_type,
-    SUM(CASE WHEN aep_timezone_cd IS NULL THEN 1 ELSE 0 END) AS null_aep_timezone_cd,
-    -- Time
-    SUM(CASE WHEN endtimeperiod IS NULL THEN 1 ELSE 0 END) AS null_endtimeperiod,
-    SUM(CASE WHEN starttimeperiod IS NULL THEN 1 ELSE 0 END) AS null_starttimeperiod,
-    -- Values
-    SUM(CASE WHEN value IS NULL THEN 1 ELSE 0 END) AS null_value,
-    SUM(CASE WHEN aep_raw_value IS NULL THEN 1 ELSE 0 END) AS null_aep_raw_value,
-    SUM(CASE WHEN scalarfloat IS NULL THEN 1 ELSE 0 END) AS null_scalarfloat,
-    -- Data quality
-    SUM(CASE WHEN aep_data_quality_cd IS NULL THEN 1 ELSE 0 END) AS null_aep_data_quality_cd,
-    SUM(CASE WHEN aep_data_validation IS NULL THEN 1 ELSE 0 END) AS null_aep_data_validation,
-    -- Account
-    SUM(CASE WHEN aep_acct_cls_cd IS NULL THEN 1 ELSE 0 END) AS null_aep_acct_cls_cd,
-    SUM(CASE WHEN aep_acct_type_cd IS NULL THEN 1 ELSE 0 END) AS null_aep_acct_type_cd,
-    SUM(CASE WHEN aep_mtr_pnt_nb IS NULL THEN 1 ELSE 0 END) AS null_aep_mtr_pnt_nb,
-    SUM(CASE WHEN aep_tarf_pnt_nb IS NULL THEN 1 ELSE 0 END) AS null_aep_tarf_pnt_nb,
-    SUM(CASE WHEN aep_comp_mtr_mltplr IS NULL THEN 1 ELSE 0 END) AS null_aep_comp_mtr_mltplr,
-    SUM(CASE WHEN aep_endtime_utc IS NULL THEN 1 ELSE 0 END) AS null_aep_endtime_utc,
-    -- Meter install/removal
-    SUM(CASE WHEN aep_mtr_install_ts IS NULL THEN 1 ELSE 0 END) AS null_aep_mtr_install_ts,
-    SUM(CASE WHEN aep_mtr_removal_ts IS NULL THEN 1 ELSE 0 END) AS null_aep_mtr_removal_ts,
-    -- Location
-    SUM(CASE WHEN aep_city IS NULL THEN 1 ELSE 0 END) AS null_aep_city,
-    SUM(CASE WHEN aep_zip IS NULL THEN 1 ELSE 0 END) AS null_aep_zip,
-    SUM(CASE WHEN aep_state IS NULL THEN 1 ELSE 0 END) AS null_aep_state,
-    -- Audit
-    SUM(CASE WHEN hdp_update_user IS NULL THEN 1 ELSE 0 END) AS null_hdp_update_user,
-    SUM(CASE WHEN hdp_insert_dttm IS NULL THEN 1 ELSE 0 END) AS null_hdp_insert_dttm,
-    SUM(CASE WHEN hdp_update_dttm IS NULL THEN 1 ELSE 0 END) AS null_hdp_update_dttm,
-    -- Partition
-    SUM(CASE WHEN authority IS NULL THEN 1 ELSE 0 END) AS null_authority,
-    SUM(CASE WHEN aep_opco IS NULL THEN 1 ELSE 0 END) AS null_aep_opco,
-    SUM(CASE WHEN aep_usage_dt IS NULL THEN 1 ELSE 0 END) AS null_aep_usage_dt,
-    SUM(CASE WHEN aep_meter_bucket IS NULL THEN 1 ELSE 0 END) AS null_aep_meter_bucket
-FROM {TABLE}
-WHERE hdp_update_user IN {UPDATE_USER_FILTER}
-  AND aep_usage_dt = '{USAGE_DATE}'
-  AND hdp_insert_dttm >= CAST('{LATEST_RUN_DT}' AS DATE)
-GROUP BY hdp_update_user;
-```
-
----
-
-### Query 4: Distinct Values Check — Catch Unexpected Data
-
-**Purpose:** Verify constant/literal columns have expected values and no garbage data.
-
-```sql
-SELECT 
-    hdp_update_user,
-    ARRAY_AGG(DISTINCT source) AS source_values,
-    ARRAY_AGG(DISTINCT isvirtual_meter) AS isvirtual_meter_values,
-    ARRAY_AGG(DISTINCT isvirtual_register) AS isvirtual_register_values,
-    ARRAY_AGG(DISTINCT aep_usage_type) AS usage_type_values,
-    ARRAY_AGG(DISTINCT aep_timezone_cd) AS timezone_values,
-    ARRAY_AGG(DISTINCT aep_opco) AS opco_values,
-    ARRAY_AGG(DISTINCT aep_state) AS state_values,
-    COUNT(DISTINCT aep_channel_id) AS dist_channel,
-    COUNT(DISTINCT aep_derived_uom) AS dist_derived_uom,
-    COUNT(DISTINCT aep_raw_uom) AS dist_raw_uom,
-    COUNT(DISTINCT aep_meter_bucket) AS dist_meter_bucket,
-    COUNT(DISTINCT authority) AS dist_authority
-FROM {TABLE}
-WHERE hdp_update_user IN {UPDATE_USER_FILTER}
-  AND aep_usage_dt = '{USAGE_DATE}'
-  AND hdp_insert_dttm >= CAST('{LATEST_RUN_DT}' AS DATE)
-GROUP BY hdp_update_user;
-```
-
-**Expected values:**
-| Column | Info/LG Pipeline | Auth Pipeline |
-|--------|-----------------|---------------|
-| source | `nonvee-hes` | `nonvee-hes` |
-| isvirtual_meter | `N` | `N` |
-| isvirtual_register | `N` | `N` |
-| aep_usage_type | `interval` | `interval` |
-| aep_timezone_cd | `US/Eastern` (oh/im/ap), `US/Central` (pso) | same |
-| aep_opco | matches `--opco` arg | same |
-
----
-
-### Query 5: starttime/endtime Calculation Validation
-
-**Purpose:** Verify `endtime - starttime = aep_sec_per_intrvl` (IntervalLength * 60).
-
-```sql
-SELECT 
-    hdp_update_user,
-    COUNT(*) AS total,
-    SUM(CASE 
-        WHEN (unix_timestamp(substr(endtimeperiod, 1, 19), 'yyyy-MM-dd''T''HH:mm:ss') 
-            - unix_timestamp(substr(starttimeperiod, 1, 19), 'yyyy-MM-dd''T''HH:mm:ss')) 
-            = CAST(aep_sec_per_intrvl AS INTEGER)
-        THEN 1 ELSE 0 
-    END) AS time_calc_PASS,
-    SUM(CASE 
-        WHEN (unix_timestamp(substr(endtimeperiod, 1, 19), 'yyyy-MM-dd''T''HH:mm:ss') 
-            - unix_timestamp(substr(starttimeperiod, 1, 19), 'yyyy-MM-dd''T''HH:mm:ss')) 
-            != CAST(aep_sec_per_intrvl AS INTEGER)
-        THEN 1 ELSE 0 
-    END) AS time_calc_FAIL
-FROM {TABLE}
-WHERE hdp_update_user IN {UPDATE_USER_FILTER}
-  AND aep_usage_dt = '{USAGE_DATE}'
-  AND hdp_insert_dttm >= CAST('{LATEST_RUN_DT}' AS DATE)
-GROUP BY hdp_update_user;
-```
-
----
-
-### Query 6: MACS Join — Match Rate
-
-**Purpose:** Check how many rows matched the MACS table (premise populated) vs not matched (premise NULL).
-
-```sql
-SELECT 
-    hdp_update_user,
-    CASE WHEN aep_premise_nb IS NOT NULL THEN 'MACS_MATCHED' ELSE 'MACS_NOT_MATCHED' END AS join_status,
-    COUNT(*) AS cnt,
-    COUNT(DISTINCT serialnumber) AS dist_meters
-FROM {TABLE}
-WHERE hdp_update_user IN {UPDATE_USER_FILTER}
-  AND aep_usage_dt = '{USAGE_DATE}'
-  AND hdp_insert_dttm >= CAST('{LATEST_RUN_DT}' AS DATE)
-GROUP BY hdp_update_user,
-    CASE WHEN aep_premise_nb IS NOT NULL THEN 'MACS_MATCHED' ELSE 'MACS_NOT_MATCHED' END
-ORDER BY hdp_update_user, join_status;
-```
-
----
-
-### Query 7: MACS Matched — Sub-Column NULL Check
-
-**Purpose:** When MACS joined successfully, verify all MACS-derived columns are populated.
-
-```sql
-SELECT 
-    hdp_update_user,
-    COUNT(*) AS macs_matched_rows,
-    SUM(CASE WHEN aep_service_point IS NULL THEN 1 ELSE 0 END) AS null_svc_point,
-    SUM(CASE WHEN aep_srvc_dlvry_id IS NULL THEN 1 ELSE 0 END) AS null_srvc_dlvry,
-    SUM(CASE WHEN aep_devicecode IS NULL THEN 1 ELSE 0 END) AS null_devicecode,
-    SUM(CASE WHEN aep_meter_program IS NULL THEN 1 ELSE 0 END) AS null_mtr_pgm,
-    SUM(CASE WHEN aep_acct_cls_cd IS NULL THEN 1 ELSE 0 END) AS null_acct_cls,
-    SUM(CASE WHEN aep_acct_type_cd IS NULL THEN 1 ELSE 0 END) AS null_acct_type,
-    SUM(CASE WHEN aep_mtr_pnt_nb IS NULL THEN 1 ELSE 0 END) AS null_mtr_pnt,
-    SUM(CASE WHEN aep_tarf_pnt_nb IS NULL THEN 1 ELSE 0 END) AS null_tarf_pnt,
-    SUM(CASE WHEN aep_mtr_install_ts IS NULL THEN 1 ELSE 0 END) AS null_mtr_install,
-    SUM(CASE WHEN aep_mtr_removal_ts IS NULL THEN 1 ELSE 0 END) AS null_mtr_removal,
-    SUM(CASE WHEN aep_city IS NULL THEN 1 ELSE 0 END) AS null_city,
-    SUM(CASE WHEN aep_zip IS NULL THEN 1 ELSE 0 END) AS null_zip,
-    SUM(CASE WHEN aep_state IS NULL THEN 1 ELSE 0 END) AS null_state
-FROM {TABLE}
-WHERE hdp_update_user IN {UPDATE_USER_FILTER}
-  AND aep_usage_dt = '{USAGE_DATE}'
-  AND aep_premise_nb IS NOT NULL
-  AND hdp_insert_dttm >= CAST('{LATEST_RUN_DT}' AS DATE)
-GROUP BY hdp_update_user;
-```
-
----
-
-### Query 8: Top 20 Meters That Failed MACS Join
-
-**Purpose:** Identify which meters didn't match MACS for investigation.
-
-```sql
-SELECT 
-    serialnumber,
-    hdp_update_user,
-    COUNT(*) AS cnt,
-    MIN(endtimeperiod) AS min_endtime,
-    MAX(endtimeperiod) AS max_endtime
-FROM {TABLE}
-WHERE hdp_update_user IN {UPDATE_USER_FILTER}
-  AND aep_usage_dt = '{USAGE_DATE}'
-  AND aep_premise_nb IS NULL
-  AND hdp_insert_dttm >= CAST('{LATEST_RUN_DT}' AS DATE)
-GROUP BY serialnumber, hdp_update_user
-ORDER BY cnt DESC
-LIMIT 20;
-```
-
----
-
-### Query 9: aep_service_point Concatenation Logic
-
-**Purpose:** Verify `aep_service_point = concat(premise, '-', tarf, '-', mtr)` when all three are NOT NULL, else NULL.
-
-```sql
-SELECT 
-    hdp_update_user,
-    CASE 
-        WHEN aep_premise_nb IS NOT NULL AND aep_tarf_pnt_nb IS NOT NULL AND aep_mtr_pnt_nb IS NOT NULL 
-            THEN 'ALL_PRESENT'
-        ELSE 'HAS_NULL'
-    END AS input_status,
-    SUM(CASE WHEN aep_service_point IS NOT NULL THEN 1 ELSE 0 END) AS svc_point_populated,
-    SUM(CASE WHEN aep_service_point IS NULL THEN 1 ELSE 0 END) AS svc_point_null,
-    COUNT(*) AS cnt
-FROM {TABLE}
-WHERE hdp_update_user IN {UPDATE_USER_FILTER}
-  AND aep_usage_dt = '{USAGE_DATE}'
-  AND hdp_insert_dttm >= CAST('{LATEST_RUN_DT}' AS DATE)
-GROUP BY hdp_update_user,
-    CASE 
-        WHEN aep_premise_nb IS NOT NULL AND aep_tarf_pnt_nb IS NOT NULL AND aep_mtr_pnt_nb IS NOT NULL 
-            THEN 'ALL_PRESENT'
-        ELSE 'HAS_NULL'
-    END;
-```
-
-**Expected result:**
-- `ALL_PRESENT` -> `svc_point_populated` = cnt, `svc_point_null` = 0
-- `HAS_NULL` -> `svc_point_populated` = 0, `svc_point_null` = cnt
-
----
-
-### Query 10: Value / Scalar Validation
-
-**Purpose:** Verify value calculations and check for negative/NULL values.
-
-```sql
-SELECT 
-    hdp_update_user,
-    COUNT(*) AS total,
-    SUM(CASE WHEN value IS NULL THEN 1 ELSE 0 END) AS null_value,
-    SUM(CASE WHEN aep_raw_value IS NULL THEN 1 ELSE 0 END) AS null_raw_value,
-    SUM(CASE WHEN scalarfloat IS NULL THEN 1 ELSE 0 END) AS null_scalar,
-    SUM(CASE WHEN value < 0 THEN 1 ELSE 0 END) AS negative_value,
-    ROUND(MIN(value), 4) AS min_value,
-    ROUND(MAX(value), 4) AS max_value,
-    ROUND(AVG(value), 4) AS avg_value,
-    ROUND(SUM(value), 2) AS sum_value
-FROM {TABLE}
-WHERE hdp_update_user IN {UPDATE_USER_FILTER}
-  AND aep_usage_dt = '{USAGE_DATE}'
-  AND hdp_insert_dttm >= CAST('{LATEST_RUN_DT}' AS DATE)
-GROUP BY hdp_update_user;
-```
-
----
-
-### Query 11: aep_endtime_utc Validation
-
-**Purpose:** Verify UTC endtime is populated and valid.
-
-```sql
-SELECT 
-    hdp_update_user,
-    COUNT(*) AS total,
-    SUM(CASE WHEN aep_endtime_utc IS NULL THEN 1 ELSE 0 END) AS null_endtime_utc,
-    SUM(CASE WHEN aep_endtime_utc IS NOT NULL 
-            AND CAST(aep_endtime_utc AS BIGINT) <= 0 THEN 1 ELSE 0 END) AS invalid_endtime_utc
-FROM {TABLE}
-WHERE hdp_update_user IN {UPDATE_USER_FILTER}
-  AND aep_usage_dt = '{USAGE_DATE}'
-  AND hdp_insert_dttm >= CAST('{LATEST_RUN_DT}' AS DATE)
-GROUP BY hdp_update_user;
-```
-
----
-
-### Query 12: DEV vs PROD Count Comparison
-
-**Purpose:** Run this exact query on both DEV and PROD Athena. Compare results side-by-side.
-
-```sql
-SELECT 
-    hdp_update_user,
-    COUNT(*) AS total_rows,
-    COUNT(DISTINCT serialnumber) AS dist_meters,
-    COUNT(DISTINCT aep_premise_nb) AS dist_premises,
-    COUNT(DISTINCT aep_channel_id) AS dist_channels,
-    SUM(CASE WHEN aep_premise_nb IS NULL THEN 1 ELSE 0 END) AS null_premise,
-    SUM(CASE WHEN aep_service_point IS NULL THEN 1 ELSE 0 END) AS null_svc_point,
-    SUM(CASE WHEN value IS NULL THEN 1 ELSE 0 END) AS null_value,
-    ROUND(SUM(value), 2) AS sum_value,
-    ROUND(AVG(value), 4) AS avg_value
-FROM {TABLE}
-WHERE hdp_update_user IN {UPDATE_USER_FILTER}
-  AND aep_usage_dt = '{USAGE_DATE}'
-  AND hdp_insert_dttm >= CAST('{LATEST_RUN_DT}' AS DATE)
-GROUP BY hdp_update_user;
-```
-
----
-
-### Query 13: Serial Number Drill-Down (DEV vs PROD)
-
-**Purpose:** Pick a `serialnumber` from DEV results. Run same query on PROD to do row-level comparison.
-
-```sql
-SELECT 
-    serialnumber,
-    aep_channel_id,
-    aep_raw_uom,
-    starttimeperiod,
-    endtimeperiod,
-    timezoneoffset,
-    aep_sec_per_intrvl,
-    value,
-    aep_raw_value,
-    scalarfloat,
-    aep_derived_uom,
-    aep_premise_nb,
-    aep_service_point,
-    aep_srvc_dlvry_id,
-    aep_mtr_pnt_nb,
-    aep_tarf_pnt_nb,
-    aep_mtr_install_ts,
-    aep_mtr_removal_ts,
-    aep_city,
-    aep_zip,
-    aep_state,
-    hdp_update_user,
-    hdp_insert_dttm,
-    hdp_update_dttm
-FROM {TABLE}
-WHERE hdp_update_user IN {UPDATE_USER_FILTER}
-  AND aep_usage_dt = '{USAGE_DATE}'
-  AND serialnumber = '{YOUR_SERIAL}'
-  AND hdp_insert_dttm >= CAST('{LATEST_RUN_DT}' AS DATE)
-ORDER BY endtimeperiod, aep_channel_id;
-```
-
----
-
-### Query 14: Full Data Extract for CSV Comparison
-
-**Purpose:** Extract all columns for a specific usage date. Export to CSV from both DEV and PROD and compare.
-
-```sql
-SELECT 
-    serialnumber,
-    source,
-    aep_devicecode,
-    isvirtual_meter,
-    timezoneoffset,
-    aep_premise_nb,
-    aep_service_point,
-    aep_mtr_install_ts,
-    aep_mtr_removal_ts,
-    aep_srvc_dlvry_id,
-    aep_comp_mtr_mltplr,
-    name_register,
-    isvirtual_register,
-    toutier,
-    toutiername,
-    aep_srvc_qlty_idntfr,
-    aep_channel_id,
-    aep_raw_uom,
-    aep_sec_per_intrvl,
-    aep_meter_alias,
-    aep_meter_program,
-    aep_billable_ind,
-    aep_usage_type,
-    aep_timezone_cd,
-    endtimeperiod,
-    starttimeperiod,
-    value,
-    aep_raw_value,
-    scalarfloat,
-    aep_data_quality_cd,
-    aep_data_validation,
-    aep_acct_cls_cd,
-    aep_acct_type_cd,
-    aep_mtr_pnt_nb,
-    aep_tarf_pnt_nb,
-    aep_endtime_utc,
-    aep_city,
-    aep_zip,
-    aep_state,
-    hdp_update_user,
-    hdp_insert_dttm,
-    hdp_update_dttm,
-    authority,
-    aep_derived_uom,
-    aep_opco,
-    aep_usage_dt,
-    aep_meter_bucket
-FROM {TABLE}
-WHERE hdp_update_user IN {UPDATE_USER_FILTER}
-  AND aep_usage_dt = '{USAGE_DATE}'
-  AND hdp_insert_dttm >= CAST('{LATEST_RUN_DT}' AS DATE)
-ORDER BY serialnumber, endtimeperiod, aep_channel_id;
-```
-
----
-
-## Validation Execution Checklist
-
-### Per Pipeline (Info / Auth / LG), Per OpCo:
-
-| Step | Query | DEV | PROD | Match? |
-|------|-------|-----|------|--------|
-| 1 | Q1: Get latest run timestamp | | | |
-| 2 | Q2: Total record count | | | |
-| 3 | Q3: Full column NULL profile | | | |
-| 4 | Q4: Distinct values / constants | | | |
-| 5 | Q5: starttime/endtime math | | | |
-| 6 | Q6: MACS join match rate | | | |
-| 7 | Q7: MACS sub-column NULLs | | | |
-| 8 | Q8: Failed MACS meters | | | |
-| 9 | Q9: aep_service_point logic | | | |
-| 10 | Q10: Value/scalar validation | | | |
-| 11 | Q11: aep_endtime_utc check | | | |
-| 12 | Q12: DEV vs PROD count comparison | | | |
-| 13 | Q13: Serial number drill-down | | | |
-| 14 | Q14: Full data CSV extract + compare | | | |
-
-### Validation Pass Criteria
-
-- Q2: `total_rows` in DEV = `total_rows` in PROD (for same hdp_update_user)
-- Q3: NULL counts match between DEV and PROD
-- Q5: `time_calc_FAIL` = 0
-- Q6: MACS match rate in DEV >= MACS match rate in PROD
-- Q9: `ALL_PRESENT` -> `svc_point_null` = 0; `HAS_NULL` -> `svc_point_populated` = 0
-- Q10: `sum_value` in DEV = `sum_value` in PROD
-- Q12: All metrics match between DEV and PROD
-- Q14: CSV diff shows zero differences (excluding `hdp_insert_dttm`, `hdp_update_dttm`)
-
----
-
-## UIQ-INFO Data Validation — Executed Queries (OH OpCo, aep_usage_dt = 2026-04-01)
-
-### Instructions
-
-1. **Run Reference Query (DEV only)** — Run the reference query below in DEV Athena first. This fetches the latest records from the consume table. Use `run_date` to get the latest run's data.
-2. **Pick key values** — From the reference query results, note down `serialnumber`, `aep_premise_nb`, `aep_endtime_utc`, `endtimeperiod` values to use as filters in subsequent queries.
-3. **Run all validation queries in both DEV and PROD** — Execute each query below in both DEV and PROD Athena.
-4. **Compare** — For each query, compare all column counts and record values between DEV and PROD. They should match exactly.
-
----
-
-### Reference Query (DEV ONLY)
-
-**Purpose:** Fetch sample records from the consume table for the latest run. Use `run_date` to filter for the most recent execution. Pick column values from these results as filters for all subsequent validation queries.
-
-```sql
-SELECT serialnumber, source, aep_devicecode, isvirtual_meter, timezoneoffset,
-       aep_premise_nb, aep_service_point, aep_mtr_install_ts, aep_mtr_removal_ts,
-       aep_srvc_dlvry_id, aep_comp_mtr_mltplr, name_register, isvirtual_register,
-       toutier, toutiername, aep_srvc_qlty_idntfr, aep_channel_id, aep_raw_uom,
-       aep_sec_per_intrvl, aep_meter_alias, aep_meter_program, aep_billable_ind,
-       aep_usage_type, aep_timezone_cd, endtimeperiod, starttimeperiod,
-       value, aep_raw_value, scalarfloat, aep_data_quality_cd, aep_data_validation,
-       aep_acct_cls_cd, aep_acct_type_cd, aep_mtr_pnt_nb, aep_tarf_pnt_nb,
-       aep_endtime_utc, aep_city, aep_zip, aep_state, hdp_update_user,
-       hdp_insert_dttm, hdp_update_dttm, authority, aep_usage_dt, aep_derived_uom,
-       aep_opco, run_date
-FROM usage_nonvee.reading_ivl_nonvee_oh
-WHERE aep_usage_dt = '2026-04-01'
-ORDER BY run_date DESC
-LIMIT 150;
-```
-
-> **Note:** The `run_date` column identifies which job run produced each record. Results are ordered by `run_date DESC` so the latest run's records appear first.
->
-> **Action:** From the results, note down the latest `run_date` value and pick `serialnumber`, `aep_endtime_utc`, `aep_premise_nb`, `endtimeperiod` values to use in the queries below.
-
----
-
-### Validation Query 1: Channel & UOM by Meter + Endtime (DEV & PROD)
-
-**Purpose:** Verify channel and UOM data matches between DEV and PROD for a specific meter and endtime.
-
-```sql
-SELECT aep_channel_id, aep_raw_uom
-FROM xfrm_interval.reading_ivl_nonvee_incr
-WHERE serialnumber = '923530104'
-  AND aep_endtime_utc = '1775016900'
-  AND aep_opco = 'oh'
-ORDER BY aep_channel_id;
-```
-
-| Environment | Result |
-|-------------|--------|
-| **DEV:**    |        |
-| **PROD:**   |        |
-
----
-
-### Validation Query 2: Record Count by Channel & Endtime (DEV & PROD)
-
-**Purpose:** Verify record counts grouped by channel and UOM match between DEV and PROD.
-
-```sql
-SELECT serialnumber, aep_endtime_utc, aep_channel_id, aep_raw_uom, 
-       endtimeperiod, count(*) as cnt
-FROM xfrm_interval.reading_ivl_nonvee_incr
-WHERE serialnumber = '923530104'
-  AND aep_opco = 'oh'
-  AND aep_endtime_utc = '1775016900'
-  AND aep_usage_dt = '2026-04-01'
-GROUP BY serialnumber, aep_endtime_utc, aep_channel_id, aep_raw_uom, 
-         endtimeperiod;
-```
-
-| Environment | Result |
-|-------------|--------|
-| **DEV:**    |        |
-| **PROD:**   |        |
-
----
-
-### Validation Query 3: Consume Table Count by Meter + Endtime (DEV & PROD)
-
-**Purpose:** Verify consume table record count for a specific meter and endtime matches between DEV and PROD.
-
-```sql
-SELECT count(*) FROM usage_nonvee.reading_ivl_nonvee_oh
-WHERE serialnumber = '923530104'
-  AND aep_opco = 'oh'
-  AND aep_endtime_utc = '1775016900'
-  AND aep_usage_dt = '2026-04-01';
-```
-
-| Environment | Result |
-|-------------|--------|
-| **DEV:**    |        |
-| **PROD:**   |        |
-
----
-
-### Validation Query 4: Consume Table Count by Meter + Update User (DEV & PROD)
-
-**Purpose:** Verify records inserted by `info-insert` for a specific meter match between DEV and PROD.
-
-```sql
-SELECT count(*) FROM usage_nonvee.reading_ivl_nonvee_oh
-WHERE serialnumber = '923530104'
-  AND aep_opco = 'oh'
-  AND aep_usage_dt = '2026-04-01'
-  AND hdp_update_user = 'info-insert';
-```
-
-| Environment | Result |
-|-------------|--------|
-| **DEV:**    |        |
-| **PROD:**   |        |
-
----
-
-### Validation Query 5: Column Values Comparison by Meter + Premise + Endtime (DEV & PROD)
-
-**Purpose:** Compare actual column values (timezoneoffset, service_point, sec_per_intrvl, endtimeperiod, starttimeperiod, scalarfloat, acct_cls, city) between DEV and PROD for the same record.
-
-```sql
-SELECT timezoneoffset, aep_service_point, aep_sec_per_intrvl, endtimeperiod, 
-       starttimeperiod, scalarfloat, aep_acct_cls_cd, aep_city
-FROM usage_nonvee.reading_ivl_nonvee_oh
-WHERE aep_usage_dt = '2026-04-01'  
-  AND serialnumber = '445494200'
-  AND aep_premise_nb = '107641531'
-  AND endtimeperiod = '2026-04-01T18:45:00-04:00';
-```
-
-| Environment | Result |
-|-------------|--------|
-| **DEV:**    |        |
-| **PROD:**   |        |
-
----
-
-### Validation Query 6: Incremental Table — Full Record by Meter + Premise + Endtime UTC (DEV & PROD)
-
-**Purpose:** Verify the incremental (xfrm) table data for a specific record. Filters by job run date (hdp_insert/update timestamps) to ensure we're comparing the same run.
-
-```sql
-SELECT 
-    serialnumber, aep_usage_dt, aep_derived_uom, aep_channel_id, aep_raw_value, 
-    value, aep_service_point, aep_premise_nb
-FROM "xfrm_interval"."reading_ivl_nonvee_incr" 
-WHERE ((hdp_update_dttm >= TIMESTAMP '2026-04-01 00:00:00' AND hdp_update_dttm < TIMESTAMP '2026-04-02 00:00:00') OR 
-       (hdp_insert_dttm >= TIMESTAMP '2026-04-01 00:00:00' AND hdp_insert_dttm < TIMESTAMP '2026-04-02 00:00:00'))
-  AND aep_opco = 'oh'
-  AND aep_usage_dt = '2026-04-01'  
-  AND serialnumber = '445494200'
-  AND aep_premise_nb = '107641531'
-  AND hdp_update_user = 'info-insert'
-  AND aep_endtime_utc = '1775045700';
-```
-
-| Environment | Result |
-|-------------|--------|
-| **DEV:**    |        |
-| **PROD:**   |        |
-
----
-
-### UIQ-INFO Validation Pass Criteria
-
-| Check | Criteria |
-|-------|----------|
-| VQ1 | `aep_channel_id` and `aep_raw_uom` values match DEV vs PROD |
-| VQ2 | `cnt` per channel/UOM/endtime matches DEV vs PROD |
-| VQ3 | `count(*)` matches DEV vs PROD |
-| VQ4 | `count(*)` for `info-insert` matches DEV vs PROD |
-| VQ5 | All column values (timezoneoffset, service_point, scalarfloat, city, etc.) match DEV vs PROD |
-| VQ6 | All column values (value, aep_raw_value, service_point, premise) match DEV vs PROD |
